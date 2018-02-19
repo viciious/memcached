@@ -44,7 +44,6 @@
 #include "proto_bin.h"
 #include "proto_txt.h"
 #include "expiration.h"
-#include "mc_sasl.h"
 
 static inline int
 memcached_skip_request(struct memcached_connection *con) {
@@ -218,22 +217,16 @@ memcached_handler(struct memcached_service *p, int fd)
 	struct memcached_connection con;
 	/* TODO: move to connection_init */
 	memset(&con, 0, sizeof(struct memcached_connection));
-	con.fd                  = fd;
-	con.in                  = ibuf_new();
-	con.out                 = obuf_new();
-	con.write_end           = obuf_create_svp(con.out);
-	con.cfg                 = p;
-	con.authentication_step = false;
-	con.sasl_ctx            = (struct sasl_ctx *)calloc(1,
-			sizeof(struct sasl_ctx));
-	if (memcached_sasl_connection_init(&con)) {
-		return;
-	}
+	con.fd        = fd;
+	con.in        = ibuf_new();
+	con.out       = obuf_new();
+	con.write_end = obuf_create_svp(con.out);
+	con.cfg       = p;
 
 	/* prepare connection type */
-	if (p->proto == MEMCACHED_PROTO_NEGOTIATION && p->sasl != true) {
+	if (p->proto == MEMCACHED_PROTO_NEGOTIATION) {
 		con.cb.parse_request = memcached_loop_negotiate;
-	} else if (p->proto == MEMCACHED_PROTO_BINARY || p->sasl == true) {
+	} else if (p->proto == MEMCACHED_PROTO_BINARY) {
 		memcached_set_bin(&con);
 	} else if (p->proto == MEMCACHED_PROTO_TEXT) {
 		memcached_set_txt(&con);
@@ -260,7 +253,6 @@ struct memcached_service*
 memcached_create(const char *name, uint32_t sid)
 {
 	iobuf_mempool_create();
-	memcached_sasl_init();
 	struct memcached_service *srv = (struct memcached_service *)
 		calloc(1, sizeof(struct memcached_service));
 	if (!srv) {
@@ -358,30 +350,11 @@ memcached_set_opt (struct memcached_service *srv, int opt, ...)
 			srv->proto = MEMCACHED_PROTO_BINARY;
 		} else if (strncmp(type, "negot", 5) == 0) {
 			srv->proto = MEMCACHED_PROTO_NEGOTIATION;
-			if (srv->sasl == true)
-				srv->proto = MEMCACHED_PROTO_BINARY;
-		} else if (strncmp(type, "text", 4) == 0) {
-			if (srv->sasl == true) {
-				say_error("Can't set Text protocol. SASL authen"
-					  "tication is enabled.");
-				return;
-			}
-			srv->proto = MEMCACHED_PROTO_TEXT;
 		} else {
-			/* unreacheable */
-			assert(0);
+			srv->proto = MEMCACHED_PROTO_TEXT;
 		}
 		break;
 	}
-	case MEMCACHED_OPT_SASL:
-		if (srv->proto == MEMCACHED_PROTO_TEXT) {
-			say_error("Can't enable SASL authentication. Text proto"
-				  "col is enabled.");
-			srv->sasl = false;
-			break;
-		}
-		srv->sasl = true;
-		break;
 	default:
 		say_error("No such option %d", opt);
 		break;

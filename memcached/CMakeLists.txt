@@ -36,7 +36,6 @@ add_library(internalso SHARED
         "internal/memcached_layer.c"
         "internal/expiration.c"
         "internal/memcached.c"
-        "internal/mc_sasl.c"
 )
 
 target_link_libraries(internalso msgpuck)
@@ -50,7 +49,6 @@ if(NOT SMALL_FOUND)
 endif()
 
 target_link_libraries(internalso small)
-target_link_libraries(internalso sasl2)
 
 set_target_properties(internalso
         PROPERTIES

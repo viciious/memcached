@@ -1,7 +1,6 @@
 -- Options for test-run tarantoolctl
 
 local workdir = os.getenv('TEST_WORKDIR')
-
 default_cfg = {
     pid_file   = workdir,
     wal_dir    = workdir,

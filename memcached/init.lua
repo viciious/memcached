@@ -72,7 +72,6 @@ enum memcached_options {
     MEMCACHED_OPT_FLUSH_ENABLED  = 0x04,
     MEMCACHED_OPT_VERBOSITY      = 0x05,
     MEMCACHED_OPT_PROTOCOL       = 0x06,
-    MEMCACHED_OPT_SASL           = 0x07,
     MEMCACHED_OPT_MAX
 };
 
@@ -161,12 +160,6 @@ local typetable = {
         end,
         [[protocol type ('negotiation'/'binary'/'ascii')]]
     },
-    sasl = {
-        'boolean',
-        function() return false end,
-        function(x) return x end,
-        [[enable SASL authorization]]
-    },
     storage = {
         'string',
         function() return 'memory' end,
@@ -252,8 +245,7 @@ local conf_table = {
     expire_items_per_iter = C.MEMCACHED_OPT_EXPIRE_COUNT,
     expire_full_scan_time = C.MEMCACHED_OPT_EXPIRE_TIME,
     verbosity             = C.MEMCACHED_OPT_VERBOSITY,
-    protocol              = C.MEMCACHED_OPT_PROTOCOL,
-    sasl                  = C.MEMCACHED_OPT_SASL
+    protocol              = C.MEMCACHED_OPT_PROTOCOL
 }
 
 local memcached_methods = {
@@ -286,8 +278,10 @@ local memcached_methods = {
         end
         memcached_internal.memcached_start(self.service)
         local parsed = uri.parse(self.uri)
-        self.listener = socket.tcp_server(parsed.host, parsed.service, {
-            handler = memcached_handler
+        self.listener = socket.tcp_server(
+            parsed.host,
+            parsed.service, {
+                handler = memcached_handler
         })
         local lname = self.listener:name()
         if self.listener == nil then
@@ -312,7 +306,6 @@ local memcached_methods = {
         end
         local rc = memcached_internal.memcached_stop(self.service)
         self.status = STOPPED
-        return self
     end,
     info = function (self)
         local stats = memcached_internal.memcached_get_stat(self.service)
@@ -321,10 +314,6 @@ local memcached_methods = {
             retval[v] = stats[0][v]
         end
         return retval
-    end,
-    grant = function (self, username)
-        box.schema.user.grant(username, 'read,write', 'space', self.space_name)
-        return self
     end
 }
 
@@ -348,12 +337,12 @@ local function memcached_init(name, uri, opts)
         instance.space = box.schema.create_space(instance.space_name, {
             engine = storage,
             format = {
-                { name = 'key',      type = 'str' },
-                { name = 'expire',   type = 'num' },
+                { name = 'key', type = 'str' },
+                { name = 'expire', type = 'num' },
                 { name = 'creation', type = 'num' },
-                { name = 'value',    type = 'str' },
-                { name = 'cas',      type = 'num' },
-                { name = 'flags',    type = 'num' },
+                { name = 'value', type = 'str' },
+                { name = 'cas', type = 'num' },
+                { name = 'flags', type = 'num' },
             }
         })
         instance.space:create_index('primary', {
@@ -375,14 +364,8 @@ local function memcached_init(name, uri, opts)
     return instance:cfg(opts):start()
 end
 
-local function memcached_get(name)
-    return memcached_services[name]
-end
-
 return {
-    create = memcached_init,
-    get    = memcached_get,
-    server = setmetatable({}, {
-        __index = memcached_services
-    })
+    create = memcached_init;
+    get    = function (name) return memcached_services[name] end;
+    debug  = memcached_services;
 }
