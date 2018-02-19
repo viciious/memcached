@@ -21,9 +21,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E touch_nocreate
 set_source_files_properties(
     ${CMAKE_SOURCE_DIR}/memcached/internal/proto_txt_parser.c
     PROPERTIES COMPILE_FLAGS -Wno-implicit-fallthrough)
-set_source_files_properties(
-    ${CMAKE_SOURCE_DIR}/memcached/internal/mc_sasl.c
-    PROPERTIES COMPILE_FLAGS -Wno-cast-function-type)
+
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-deprecated")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated")
