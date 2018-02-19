@@ -7,7 +7,6 @@ saved_path = sys.path[:]
 sys.path.append(os.path.dirname(os.path.abspath(inspect.getsourcefile(lambda:0))))
 
 from internal.memcached_connection import MemcachedBinaryConnection
-from internal.memcached_connection import MemcachedTextConnection
 from internal.memcached_connection import STATUS, COMMANDS
 
 mc = MemcachedBinaryConnection("127.0.0.1", iproto.py_con.port)
@@ -141,13 +140,9 @@ if True:
     res = mc1.set('x', 'somevalue')
     iequal(res[0]['status'], STATUS['AUTH_ERROR'])
 
-# if True:
-#     res = mc.stat()
-#     iequal(res['auth_cmds'], '6')
-#     iequal(res['auth_errors'], '4')
-
-mc_client = MemcachedTextConnection('localhost', iproto.py_con.port)
-mc_client("get foo\r\n")
-empty('x')
+if True:
+    res = mc.stat()
+    iequal(res['auth_cmds'], '6')
+    iequal(res['auth_errors'], '4')
 
 sys.path = saved_path
