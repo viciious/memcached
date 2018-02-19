@@ -24,9 +24,7 @@ memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
 			return -1;
 		} else if (tpl == NULL) {
 			box_iterator_free(iter);
-			if (box_txn_commit() == -1) {
-				return -1;
-			}
+			box_txn_commit();
 			*iterp = NULL;
 			return 0;
 		} else if (is_expired_tuple(p, tpl)) {
@@ -49,9 +47,7 @@ memcached_expire_process(struct memcached_service *p, box_iterator_t **iterp)
 			p->stat.evictions++;
 		}
 	}
-	if (box_txn_commit() == -1) {
-		return -1;
-	}
+	box_txn_commit();
 	return 0;
 }
 
@@ -75,13 +71,6 @@ restart:
 		goto finish;
 	}
 	rv = memcached_expire_process(p, &iter);
-	if (rv == -1) {
-		const box_error_t *err = box_error_last();
-		say_error("Unexpected error %u: %s",
-				box_error_code(err),
-				box_error_message(err));
-		goto finish;
-	}
 
 	/* This part is where we rest after all deletes */
 	double delay = ((double )p->expire_count * p->expire_time) /
@@ -95,8 +84,7 @@ restart:
 
 	goto restart;
 finish:
-	if (iter)
-		box_iterator_free(iter);
+	if (iter) box_iterator_free(iter);
 	return 0;
 }
 

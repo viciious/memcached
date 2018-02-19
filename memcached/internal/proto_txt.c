@@ -129,8 +129,8 @@ memcached_txt_process_set(struct memcached_connection *con)
 	con->cfg->stat.cmd_set++;
 
 	if (cmd != MEMCACHED_TXT_CMD_SET) {
-	        if (cmd == MEMCACHED_TXT_CMD_CAS)
-        	        cas_expected = con->request.cas;
+		if (cmd == MEMCACHED_TXT_CMD_CAS)
+			cas_expected = con->request.cas;
 
 		box_tuple_t *tuple = NULL;
 		if (memcached_tuple_get(con, key, key_len, &tuple) == -1) {
