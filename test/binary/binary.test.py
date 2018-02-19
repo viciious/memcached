@@ -47,13 +47,13 @@ def set(key, expire, flags, value):
     res = mc.set(key, value, expire, flags)
     return check(key, flags, value, 1)
 
-def empty(key, level = 0):
+def empty(key):
     res = mc.get(key)
-    return iequal(res[0]['status'], STATUS['KEY_ENOENT'], 2 + level)
+    return iequal(res[0]['status'], STATUS['KEY_ENOENT'], 1)
 
 def delete(key, when):
     res = mc.delete(key)
-    empty(key, 1)
+    empty(key)
 
 print("""#---------------------------# flush and noop tests #--------------------------#""")
 
